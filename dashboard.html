@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SC - Dashboard</title>
+  <style>
+    :root{
+      --accent:#1b8b3b;
+      --blue:#0b6cff;
+      --text:#222;
+    }
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;
+      height:100%;
+      font-family:Arial, sans-serif;
+      background:#fff;
+      color:var(--text);
+    }
+    .topbar{
+      height:56px;
+      border-bottom:1px solid #eee;
+      padding:0 16px;
+      display:flex;
+      align-items:center;
+      background:#fff;
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      z-index:10;
+    }
+    .hambtn{
+      background:none;
+      border:none;
+      font-size:22px;
+      cursor:pointer;
+      margin-right:10px;
+    }
+    .brand{font-size:18px;font-weight:700}
+    .layout{
+      display:flex;
+      min-height:100vh;
+      padding-top:56px; /* space for topbar */
+    }
+
+    /* Sidebar (drawer) */
+    .sidebar{
+      position:fixed;
+      top:56px;
+      left:0;
+      bottom:0;
+      width:240px;
+      background:#fafafa;
+      border-right:1px solid #eee;
+      transform:translateX(-100%);
+      transition:transform .25s;
+      z-index:20;
+      padding:12px;
+    }
+    .sidebar.open{
+      transform:translateX(0);
+    }
+    .heading{font-weight:700;margin-bottom:10px}
+    .menu-list{list-style:none;margin:0;padding:0}
+    .menu-list li{
+      padding:10px;
+      border-radius:6px;
+      margin-bottom:6px;
+      font-size:14px;
+      cursor:pointer;
+    }
+    .menu-list li:hover{background:#fff}
+    .logout{
+      margin-top:14px;
+      width:100%;
+      padding:10px;
+      border:none;
+      border-radius:6px;
+      background:#ff4b4b;
+      color:#fff;
+      font-size:14px;
+      cursor:pointer;
+    }
+
+    /* Dark overlay when menu open */
+    .overlay{
+      position:fixed;
+      inset:56px 0 0 0;
+      background:rgba(0,0,0,0.3);
+      display:none;
+      z-index:15;
+    }
+    .overlay.show{
+      display:block;
+    }
+
+    .content{
+      flex:1;
+      padding:18px;
+      background:#fff;
+      width:100%;
+    }
+    .section{
+      background:#fff;
+      border-radius:10px;
+      border:1px solid #eee;
+      padding:16px;
+      margin-bottom:16px;
+      box-shadow:0 3px 10px rgba(0,0,0,0.03);
+    }
+    .section h2{margin:0 0 8px;font-size:18px}
+    .section p{margin:4px 0 8px;font-size:14px;color:#555}
+
+    .boards{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:18px;
+    }
+    .board{
+      flex:1 1 calc(50% - 6px);
+      min-width:140px;
+      background:linear-gradient(#1b8b3b,#0c6b2e);
+      color:#fff;
+      text-align:center;
+      padding:18px;
+      border-radius:10px;
+      font-size:14px;
+      cursor:pointer;
+      box-shadow:0 6px 18px rgba(27,139,59,0.12);
+    }
+    .board h3{margin:6px 0 0}
+    @media(max-width:700px){
+      .board{flex:1 1 100%}
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      margin-bottom:10px;
+      font-size:14px;
+    }
+    .field label{margin-bottom:4px}
+    .field input,
+    .field select,
+    .field textarea{
+      width:100%;
+      padding:8px;
+      border-radius:6px;
+      border:1px solid #ccc;
+      font-size:14px;
+    }
+
+    .btn-main{
+      padding:8px 14px;
+      border-radius:6px;
+      border:none;
+      background:var(--accent);
+      color:#fff;
+      font-size:14px;
+      cursor:pointer;
+      margin-top:10px;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+      margin-top:8px;
+    }
+    th,td{
+      border:1px solid #ddd;
+      padding:6px;
+      text-align:left;
+    }
+    th{background:#f3f3f3;}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <button class="hambtn" id="hamb">☰</button>
+    <div class="brand">SC - Dashboard</div>
+  </div>
+
+  <div class="sidebar" id="sidebar">
+    <div class="heading">Menu</div>
+    <ul class="menu-list">
+      <li data-section="home">🏠 Home</li>
+      <li data-section="profile">👤 Profile</li>
+      <li data-section="fee">💰 Fee</li>
+      <li data-section="results">📊 Results</li>
+      <li data-section="tests">📝 Tests</li>
+      <li data-section="attendance">📅 Attendance</li>
+      <li data-section="support">📞 Customer Support</li>
+    </ul>
+    <button class="logout" id="logoutBtn">Logout</button>
+  </div>
+  <div class="overlay" id="overlay"></div>
+
+  <div class="layout">
+    <main class="content">
+      <!-- HOME VIEW -->
+      <div id="homeView" class="section">
+        <h2 id="homeTitle">Welcome, Student</h2>
+        <p id="homeInfo" style="font-size:13px;color:#666;"></p>
+        <p>Select an option from the menu or tap a card below.</p>
+
+        <div class="boards">
+          <div class="board" data-board="fee">
+            <div>Student Fee</div><h3>Fee</h3>
+          </div>
+          <div class="board" data-board="results">
+            <div>Student Results</div><h3>Results</h3>
+          </div>
+          <div class="board" data-board="tests">
+            <div>Tests</div><h3>Tests</h3>
+          </div>
+          <div class="board" data-board="attendance">
+            <div>Student Attendance</div><h3>Attendance</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTENT AREA FOR OTHER PAGES -->
+      <div id="panelView"></div>
+    </main>
+  </div>
+
+  <script>
+    (function(){
+      alert("Dashboard loaded"); // you can remove this later if you want
+
+      var sidebar   = document.getElementById("sidebar");
+      var hamb      = document.getElementById("hamb");
+      var overlay   = document.getElementById("overlay");
+      var logoutBtn = document.getElementById("logoutBtn");
+      var homeView  = document.getElementById("homeView");
+      var panel     = document.getElementById("panelView");
+      var homeTitle = document.getElementById("homeTitle");
+      var homeInfo  = document.getElementById("homeInfo");
+
+      // Load profile & admission from localStorage
+      var profile = null;
+      try {
+        var rawProfile = localStorage.getItem("scProfile");
+        if (rawProfile) profile = JSON.parse(rawProfile);
+      } catch(e) {}
+
+      var studentName     = (profile && profile.name) ? profile.name : "Student";
+      var admissionNumber = localStorage.getItem("scAdmission") || "";
+
+      homeTitle.textContent = "Welcome, " + studentName;
+      homeInfo.textContent  = admissionNumber
+        ? "Admission No: " + admissionNumber
+        : "Admission number not set.";
+
+      // Load payments
+      var paymentsData = [];
+      try{
+        var rawPay = localStorage.getItem("scPayments");
+        if (rawPay) paymentsData = JSON.parse(rawPay);
+      }catch(e){ paymentsData = []; }
+
+      // Drawer helpers
+      function openMenu(){
+        sidebar.classList.add("open");
+        overlay.classList.add("show");
+      }
+      function closeMenu(){
+        sidebar.classList.remove("open");
+        overlay.classList.remove("show");
+      }
+
+      // Topbar
+      hamb.onclick = function(){
+        if (sidebar.classList.contains("open")) closeMenu();
+        else openMenu();
+      };
+      overlay.onclick = function(){
+        closeMenu();
+      };
+      logoutBtn.onclick = function(){
+        window.location.href = "index.html";
+      };
+
+      function showHome(){
+        panel.innerHTML = "";
+        homeView.style.display = "block";
+      }
+
+      function showSection(title, desc){
+        homeView.style.display = "none";
+        panel.innerHTML =
+          '<div class="section">' +
+            '<h2>'+title+'</h2>' +
+            '<p>'+desc+'</p>' +
+            '<button class="btn-main" id="backBtn">⬅ Back to Home</button>' +
+          '</div>';
+        var backBtn = document.getElementById("backBtn");
+        backBtn.onclick = function(){
+          showHome();
+        };
+      }
+
+      // PROFILE PAGE
+      function showProfile(){
+        homeView.style.display = "none";
+        var stored = {};
+        try{
+          var r = localStorage.getItem("scProfile");
+          if (r) stored = JSON.parse(r);
+        }catch(e){stored={};}
+
+        panel.innerHTML =
+          '<div class="section">' +
+            '<h2>Profile</h2>' +
+            '<p>Update your details. They will be saved on this device.</p>' +
+
+            '<div class="field"><label>Name</label>' +
+              '<input id="pname" type="text" placeholder="Enter name" value="'+(stored.name || '')+'">' +
+            '</div>' +
+
+            '<div class="field"><label>Age</label>' +
+              '<input id="page" type="number" placeholder="Enter age" value="'+(stored.age || '')+'">' +
+            '</div>' +
+
+            '<div class="field"><label>Gender</label>' +
+              '<select id="pgender">' +
+                '<option value="">Select gender</option>' +
+                '<option>Male</option>' +
+                '<option>Female</option>' +
+                '<option>Other</option>' +
+              '</select>' +
+            '</div>' +
+
+            '<button class="btn-main" id="saveProf">Save Profile</button>' +
+            '<button class="btn-main" id="backHome" style="background:#0b6cff;">⬅ Back to Home</button>' +
+          '</div>';
+
+        document.getElementById("pgender").value = stored.gender || "";
+
+        document.getElementById("saveProf").onclick = function(){
+          var obj = {
+            name: document.getElementById("pname").value.trim(),
+            age: document.getElementById("page").value.trim(),
+            gender: document.getElementById("pgender").value
+          };
+          localStorage.setItem("scProfile", JSON.stringify(obj));
+          if (obj.name){
+            homeTitle.textContent = "Welcome, " + obj.name;
+          }
+          alert("Profile saved ✔");
+        };
+
+        document.getElementById("backHome").onclick = function(){
+          showHome();
+        };
+      }
+
+      // FEE PAGE (payment + history)
+      function showFee(){
+        homeView.style.display = "none";
+
+        var admVal  = admissionNumber || "";
+        var admHint = admVal ? admVal : "e.g. 23CSE001";
+
+        var html =
+          '<div class="section">' +
+            '<h2>Student Fee & Payments</h2>' +
+            '<p>Demo online payment + fee payment history stored on this device.</p>' +
+
+            '<div class="field">' +
+              '<label>Admission Number</label>' +
+              '<input id="admInput" type="text" value="'+admVal+'" placeholder="'+admHint+'">' +
+            '</div>' +
+
+            '<div class="field">' +
+              '<label>Student Name</label>' +
+              '<input id="feeNameInput" type="text" placeholder="Enter student name" value="'+(studentName || "")+'">' +
+            '</div>' +
+
+            '<div class="field">' +
+              '<label>Amount (₹)</label>' +
+              '<input id="amountInput" type="number" min="1" placeholder="Enter amount">' +
+            '</div>' +
+
+            '<div class="field">' +
+              '<label>Payment Mode</label>' +
+              '<select id="modeSelect">' +
+                '<option value="">Select mode</option>' +
+                '<option>UPI</option>' +
+                '<option>Net Banking</option>' +
+                '<option>Debit Card</option>' +
+                '<option>Credit Card</option>' +
+              '</select>' +
+            '</div>' +
+
+            '<button class="btn-main" id="payNowBtn">Pay Now (Demo)</button>' +
+            '<p style="font-size:12px;color:#888;margin-top:6px;">Note: This is a demo only. No real payment happens.</p>' +
+
+            '<hr>' +
+            '<h3>Payment History</h3>' +
+            '<div id="historyArea"></div>' +
+
+            '<button class="btn-main" id="backHomeFee" style="background:#0b6cff;margin-top:12px;">⬅ Back to Home</button>' +
+          '</div>';
+
+        panel.innerHTML = html;
+
+        var admInput     = document.getElementById("admInput");
+        var feeNameInput = document.getElementById("feeNameInput");
+        var amountInput  = document.getElementById("amountInput");
+        var modeSelect   = document.getElementById("modeSelect");
+        var payBtn       = document.getElementById("payNowBtn");
+
+        function renderHistory(){
+          var box = document.getElementById("historyArea");
+          if (!paymentsData || paymentsData.length === 0){
+            box.innerHTML = "<p>No payments recorded yet.</p>";
+            return;
+          }
+          var s = '<table><thead><tr>' +
+                  '<th>#</th><th>Admission</th><th>Name</th><th>Amount (₹)</th><th>Mode</th><th>Date & Time</th>' +
+                  '</tr></thead><tbody>';
+          for (var i=0;i<paymentsData.length;i++){
+            var r = paymentsData[i];
+            s += '<tr>' +
+                   '<td>'+(i+1)+'</td>' +
+                   '<td>'+r.admission+'</td>' +
+                   '<td>'+r.name+'</td>' +
+                   '<td>'+r.amount+'</td>' +
+                   '<td>'+r.mode+'</td>' +
+                   '<td>'+r.time+'</td>' +
+                 '</tr>';
+          }
+          s += '</tbody></table>';
+          box.innerHTML = s;
+        }
+
+        renderHistory();
+
+        payBtn.onclick = function(){
+          var adm  = admInput.value.trim();
+          var nm   = feeNameInput.value.trim();
+          var amt  = amountInput.value.trim();
+          var mode = modeSelect.value;
+
+          if (!adm){ alert("Enter admission number."); return; }
+          if (!nm){ alert("Enter student name."); return; }
+          if (!amt || Number(amt)<=0){ alert("Enter valid amount."); return; }
+          if (!mode){ alert("Select payment mode."); return; }
+
+          // update global admission + home text
+          admissionNumber = adm;
+          try{ localStorage.setItem("scAdmission", admissionNumber); }catch(e){}
+          homeInfo.textContent = "Admission No: " + admissionNumber;
+
+          var record = {
+            admission: adm,
+            name: nm,
+            amount: amt,
+            mode: mode,
+            time: new Date().toLocaleString()
+          };
+          paymentsData.push(record);
+          try{
+            localStorage.setItem("scPayments", JSON.stringify(paymentsData));
+          }catch(e){}
+
+          alert("Payment recorded (demo) ✔");
+          amountInput.value = "";
+          renderHistory();
+        };
+
+        document.getElementById("backHomeFee").onclick = function(){
+          showHome();
+        };
+      }
+
+      // CUSTOMER SUPPORT PAGE
+      function showSupport(){
+        homeView.style.display = "none";
+        var last = localStorage.getItem("scSupportMsg") || "";
+        var displayName = homeTitle.textContent.replace("Welcome, ","");
+
+        panel.innerHTML =
+          '<div class="section">' +
+            '<h2>Customer Support</h2>' +
+            '<p>Hi '+displayName+', what problem are you facing?</p>' +
+            '<div class="field">' +
+              '<label>Write your issue below</label>' +
+              '<textarea id="supportText" rows="4" placeholder="Describe your problem here">'+last+'</textarea>' +
+            '</div>' +
+            '<button class="btn-main" id="saveSupport">Submit</button>' +
+            '<button class="btn-main" id="backHome2" style="background:#0b6cff;margin-left:8px;">⬅ Back to Home</button>' +
+          '</div>';
+
+        document.getElementById("saveSupport").onclick = function(){
+          var msg = document.getElementById("supportText").value.trim();
+          localStorage.setItem("scSupportMsg", msg);
+          alert("Message saved (demo) ✔");
+        };
+
+        document.getElementById("backHome2").onclick = function(){
+          showHome();
+        };
+      }
+
+      // MENU clicks
+      var menuItems = document.querySelectorAll(".menu-list li");
+      for (var i=0; i<menuItems.length; i++){
+        menuItems[i].onclick = function(){
+          var s = this.getAttribute("data-section");
+          closeMenu();
+          if      (s === "home")       showHome();
+          else if (s === "profile")    showProfile();
+          else if (s === "fee")        showFee();
+          else if (s === "results")    showSection("Results", "This is the Results page (demo).");
+          else if (s === "tests")      window.location.href = "test.html";
+          else if (s === "attendance") showSection("Attendance", "This is the Attendance page (demo).");
+          else if (s === "support")    showSupport();
+        };
+      }
+
+      // BOARD (card) clicks
+      var boards = document.querySelectorAll(".board");
+      for (var j=0; j<boards.length; j++){
+        boards[j].onclick = function(){
+          var label = this.getAttribute("data-board");
+          closeMenu();
+          if      (label === "fee")        showFee();
+          else if (label === "results")    showSection("Results", "This is the Results page (demo).");
+          else if (label === "tests")      window.location.href = "test.html";
+          else if (label === "attendance") showSection("Attendance", "This is the Attendance page (demo).");
+        };
+      }
+
+      // Start on home
+      showHome();
+    })();
+  </script>
+</body>
+</html>

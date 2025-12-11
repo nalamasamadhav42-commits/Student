@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Student Confirm - Home</title>
+  <style>
+    body{
+      margin:0;
+      font-family:Arial, sans-serif;
+      background:#f5f5f5;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:100vh;
+    }
+    .card{
+      background:#fff;
+      padding:20px;
+      border-radius:10px;
+      box-shadow:0 4px 16px rgba(0,0,0,0.08);
+      max-width:360px;
+      width:100%;
+    }
+    h1{text-align:center;margin-top:0;margin-bottom:10px;}
+    p{text-align:center;font-size:14px;color:#555;}
+    .section-title{
+      margin-top:16px;
+      font-weight:bold;
+      font-size:15px;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      margin-top:8px;
+      font-size:14px;
+    }
+    .field label{margin-bottom:4px;}
+    .field input{
+      padding:8px;
+      border-radius:6px;
+      border:1px solid #ccc;
+      font-size:14px;
+    }
+    .btn{
+      width:100%;
+      margin-top:10px;
+      padding:10px;
+      border:none;
+      border-radius:6px;
+      font-size:15px;
+      cursor:pointer;
+    }
+    .btn-primary{background:#0b6cff;color:#fff;}
+    .btn-teacher{background:#1b8b3b;color:#fff;}
+    .note{font-size:12px;color:#777;margin-top:6px;text-align:center;}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Student Confirm</h1>
+    <p>Choose login type</p>
+
+    <div>
+      <div class="section-title">Student Login</div>
+      <div class="field">
+        <label for="stuAdm">Admission Number</label>
+        <input id="stuAdm" type="text" placeholder="e.g. 23CSE001">
+      </div>
+      <button class="btn btn-primary" id="stuBtn">Continue as Student</button>
+    </div>
+
+    <div style="margin-top:18px;">
+      <div class="section-title">Teacher Login</div>
+      <div class="field">
+        <label for="teachUser">Teacher ID</label>
+        <input id="teachUser" type="text" placeholder="teacher">
+      </div>
+      <div class="field">
+        <label for="teachPass">Password</label>
+        <input id="teachPass" type="password" placeholder="sc123">
+      </div>
+      <button class="btn btn-teacher" id="teachBtn">Login as Teacher</button>
+      <div class="note">Demo teacher login → ID: <b>teacher</b>, Password: <b>sc123</b></div>
+    </div>
+  </div>
+
+  <script>
+    window.onload = function(){
+      var stuBtn    = document.getElementById("stuBtn");
+      var stuAdmInp = document.getElementById("stuAdm");
+      var teachBtn  = document.getElementById("teachBtn");
+      var tUser     = document.getElementById("teachUser");
+      var tPass     = document.getElementById("teachPass");
+
+      stuBtn.onclick = function(){
+        var adm = stuAdmInp.value.trim();
+        if (!adm){
+          alert("Please enter admission number.");
+          return;
+        }
+        try{
+          localStorage.setItem("scAdmission", adm);
+        }catch(e){}
+        window.location.href = "dashboard.html";
+      };
+
+      teachBtn.onclick = function(){
+        var u = tUser.value.trim();
+        var p = tPass.value.trim();
+        if (u === "teacher" && p === "sc123"){
+          window.location.href = "teacher.html";
+        } else {
+          alert("Invalid teacher ID or password.");
+        }
+      };
+    };
+  </script>
+</body>
+</html>

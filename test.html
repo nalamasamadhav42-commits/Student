@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SC - Tests</title>
+  <style>
+    body{
+      margin:0;
+      font-family:Arial, sans-serif;
+      background:#f5f5f5;
+    }
+    .topbar{
+      background:#0b6cff;
+      color:#fff;
+      padding:12px 16px;
+      font-size:18px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .container{
+      max-width:900px;
+      margin:16px auto;
+      padding:16px;
+      background:#fff;
+      border-radius:10px;
+      box-shadow:0 3px 12px rgba(0,0,0,0.08);
+    }
+    .field{
+      margin-bottom:10px;
+      font-size:14px;
+      display:flex;
+      flex-direction:column;
+    }
+    select{
+      padding:8px;
+      border-radius:6px;
+      border:1px solid #ccc;
+      font-size:14px;
+    }
+    .question-block{
+      border:1px solid #eee;
+      padding:10px;
+      border-radius:8px;
+      margin-bottom:10px;
+      background:#fafafa;
+      font-size:14px;
+    }
+    .btn{
+      padding:8px 14px;
+      border-radius:6px;
+      border:none;
+      font-size:14px;
+      cursor:pointer;
+      margin-top:8px;
+    }
+    .btn-main{background:#1b8b3b;color:#fff;}
+    .btn-secondary{background:#0b6cff;color:#fff;}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <span>SC - Student Tests</span>
+    <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+  </div>
+
+  <div class="container">
+    <h2>Available Tests</h2>
+    <div id="testArea"></div>
+  </div>
+
+  <script>
+    var tests = [];
+    var results = [];
+    var currentTest = null;
+
+    window.onload = function(){
+      try{
+        var raw = localStorage.getItem("scMCQTests");
+        if (raw) tests = JSON.parse(raw);
+      }catch(e){tests=[];}
+
+      try{
+        var rr = localStorage.getItem("scMCQResults");
+        if (rr) results = JSON.parse(rr);
+      }catch(e){results=[];}
+
+      renderTestSelector();
+    };
+
+    function renderTestSelector(){
+      var area = document.getElementById("testArea");
+      if (!tests || tests.length === 0){
+        area.innerHTML =
+          "<p>No tests are available. Ask your teacher to create one in teacher panel.</p>";
+        return;
+      }
+      var html = '<div class="field">';
+      html += '<label>Select a test</label>';
+      html += '<select id="testSelect">';
+      html += '<option value="">-- Choose test --</option>';
+      for (var i = 0; i < tests.length; i++){
+        html += '<option value="'+tests[i].id+'">'+tests[i].title+'</option>';
+      }
+      html += '</select></div>';
+      html += '<div id="questionsContainer" style="margin-top:12px;"></div>';
+
+      area.innerHTML = html;
+
+      var sel = document.getElementById("testSelect");
+      sel.onchange = function(){
+        var idStr = this.value;
+        if (!idStr){
+          document.getElementById("questionsContainer").innerHTML = "";
+          currentTest = null;
+          return;
+        }
+        var id = parseInt(idStr,10);
+        var t = null;
+        for (var i = 0; i < tests.length; i++){
+          if (tests[i].id === id){ t = tests[i]; break; }
+        }
+        if (!t){
+          alert("Test not found.");
+          return;
+        }
+        currentTest = t;
+        renderTestQuestions(t);
+      };
+    }
+
+    function renderTestQuestions(test){
+      var box = document.getElementById("questionsContainer");
+      var html = "<h3>"+test.title+"</h3>";
+      for (var qIndex = 0; qIndex < test.questions.length; qIndex++){
+        var q = test.questions[qIndex];
+        html += '<div class="question-block">';
+        html += '<p><strong>Q'+(qIndex+1)+'.</strong> '+q.text+'</p>';
+        for (var o = 0; o < q.options.length; o++){
+          html += '<label><input type="radio" name="q'+qIndex+'" value="'+o+'"> '+q.options[o]+'</label><br>';
+        }
+        html += '</div>';
+      }
+      html += '<button class="btn btn-main" onclick="submitCurrentTest()">Submit Test</button>';
+      box.innerHTML = html;
+    }
+
+    function submitCurrentTest(){
+      if (!currentTest){
+        alert("Please select a test first.");
+        return;
+      }
+      var correct = 0;
+      var total   = currentTest.questions.length;
+      var attempted = 0;
+
+      for (var qIndex = 0; qIndex < currentTest.questions.length; qIndex++){
+        var radios = document.getElementsByName("q"+qIndex);
+        var chosen = null;
+        for (var r = 0; r < radios.length; r++){
+          if (radios[r].checked){
+            chosen = parseInt(radios[r].value,10);
+            break;
+          }
+        }
+        if (chosen !== null){
+          attempted++;
+          if (chosen === currentTest.questions[qIndex].correctIndex){
+            correct++;
+          }
+        }
+      }
+
+      var percent = total > 0 ? Math.round((correct/total)*100) : 0;
+      var adm = localStorage.getItem("scAdmission") || "";
+      var res = {
+        testId: currentTest.id,
+        testTitle: currentTest.title,
+        correct: correct,
+        total: total,
+        percent: percent,
+        admission: adm,
+        time: new Date().toLocaleString()
+      };
+      results.push(res);
+      try{
+        localStorage.setItem("scMCQResults", JSON.stringify(results));
+      }catch(e){}
+
+      alert("You scored "+correct+"/"+total+" ("+percent+"%).");
+    }
+  </script>
+</body>
+</html>
